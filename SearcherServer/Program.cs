@@ -4,56 +4,56 @@ using System.Net;
 using System.Text;
 
 using TcpLib;
+using System.Collections.Generic;
 
 namespace SearcherServer
 {
     internal class Program
     {
-        
-        static void Main(string[] args)
+        private static void Main(string[] args) => new Program().Start();
+        List<StreetIndex> streetIndices;
+        private void Start()
         {
-            List<StreetIndex> streetIndices = new List<StreetIndex>();
+            Run().Wait();
+        }
+
+        private async Task Run()
+        {
+            streetIndices = new List<StreetIndex>();
             streetIndices = ParseFromFile("streets.txt");
             if (streetIndices.Count == 0)
             {
-                Console.WriteLine("No street indices found. Server stopped.");
+                Console.WriteLine("Не найдено улиц, сервер отключен.");
                 return;
             }
 
-           
-            Socket listening = new Socket
-            (
-                AddressFamily.InterNetwork,
-                SocketType.Stream,
-                ProtocolType.IP
-            );
-
-            Console.WriteLine("Введите свой IP-адрес: ");
-            string ip = Console.ReadLine();
-            if (!IPAddress.TryParse(ip, out IPAddress address))
+            Console.WriteLine("Введите IP:");
+            if (!IPAddress.TryParse(Console.ReadLine(), out var address))
             {
-                Console.WriteLine("IP Адрес не валиден");
+                Console.WriteLine("Невалидный IP, отключение сервера");
                 return;
             }
-
-            IPEndPoint endPiont = new IPEndPoint(address, 2048);
-            listening.Bind(endPiont);
-            
-            listening.Listen(10);
-            Console.WriteLine($"Сервер ожидает подключения по адресу {endPiont}");
-
+            TcpListener listening = new TcpListener(address, 2024);
+            Console.WriteLine("Сервер запущен");
+            listening.Start();
 
             while (true)
             {
-                using Socket client = listening.Accept();
+                TcpClient client = await listening.AcceptTcpClientAsync();
 
-                byte[] buffer = new byte[2048];
-                int received = client.Receive(buffer);
+                ListenToClient(client);
+                client.Close();
 
-
-                string indexStr = Encoding.UTF8.GetString(buffer, 0, received);
+            }
+        }
+        private async void ListenToClient(TcpClient client)
+        {
+            while (true)
+            {
+                string indexStr = await client.ReceiveString();
                 int index = int.Parse(indexStr);
                 List<string> streets = new List<string>();
+
                 foreach (StreetIndex streetIndex in streetIndices)
                 {
                     if (streetIndex.Index == index)
@@ -63,20 +63,15 @@ namespace SearcherServer
                     }
                 }
                 string message = "";
-                if (streets.Count != 0)                
-                    message = string.Join("\n", streets); 
+                if (streets.Count != 0)
+                    message = string.Join("\n", streets);
                 else
-                    message = "По данному индексу не найдено улиц";
+                    message = "По данному индексу не найдено улиц";                
+                client.SendString(message);
                 
-                buffer = Encoding.UTF8.GetBytes(message);
-                client.Send(buffer);
-                client.Shutdown(SocketShutdown.Both);
             }
-        }       
-
-
-
-    private static List<StreetIndex> ParseFromFile(string filePath)
+        }
+        private static List<StreetIndex> ParseFromFile(string filePath)
         {
             if (!File.Exists(filePath))
             {
@@ -90,11 +85,11 @@ namespace SearcherServer
 
             foreach (string line in lines)
             {
-                if (line.StartsWith(" "))  
+                if (line.StartsWith(" "))
                     currentStreetIndex.AddStreet(line.Trim());
-                
+
                 else
-                {                   
+                {
                     int index = int.Parse(line);
                     currentStreetIndex = new StreetIndex(index);
                     streetIndices.Add(currentStreetIndex);
@@ -103,4 +98,9 @@ namespace SearcherServer
             return streetIndices;
         }
     }
+
+
+        
+    
+    
 }

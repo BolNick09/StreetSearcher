@@ -14,33 +14,30 @@ namespace FrmSearcherServer
             InitializeComponent();
         }
 
-        private void btnSearch_Click(object sender, EventArgs e)
+        private async void btnSearch_Click(object sender, EventArgs e)
         {
-            Socket nameSocket = new Socket
-            (
-                AddressFamily.InterNetwork,
-                SocketType.Stream,
-                ProtocolType.IP
-            );
+            TcpClient server = new TcpClient();
+            //Socket nameSocket = new Socket
+            //(
+            //    AddressFamily.InterNetwork,
+            //    SocketType.Stream,
+            //    ProtocolType.IP
+            //);
 
-            Console.WriteLine("Введите свой IP-адрес: ");
-            
-            if (!IPAddress.TryParse(tbIp.Text, out IPAddress address))
+            Console.WriteLine("Введите IP:");
+            if (!IPAddress.TryParse(tbIp.Text, out var address))
             {
-                Console.WriteLine("IP Адрес не валиден");
+                Console.WriteLine("Невалидный IP, отключение сервера");
                 return;
             }
-            IPEndPoint endPiont = new IPEndPoint(address, 2048);
-            nameSocket.Connect(endPiont);
+            await server.ConnectAsync(address, 2024);
+            Console.WriteLine("Соединение с сервером установлено");
 
             string message = tbIndex.Text.Trim();
-            byte[] sendBytes = Encoding.UTF8.GetBytes(message);
-            nameSocket.Send(sendBytes);
+            server.SendString(message);
 
-            byte[] receiveBytes = new byte[2048];
-            nameSocket.Receive(receiveBytes);
 
-            string receiveText = Encoding.UTF8.GetString(receiveBytes).Trim();
+            string receiveText = await server.ReceiveString();
             rtbStreets.Clear();
             rtbStreets.Text = receiveText;
         }
