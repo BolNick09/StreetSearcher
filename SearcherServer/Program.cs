@@ -20,7 +20,8 @@ namespace SearcherServer
         private async Task Run()
         {
             streetIndices = new List<StreetIndex>();
-            streetIndices = ParseFromFile("streets.txt");
+            string filePath = "C:\\Users\\BolNi\\source\\repos\\StreetSearcher\\streets.txt";
+            streetIndices = ParseFromFile(filePath);
             if (streetIndices.Count == 0)
             {
                 Console.WriteLine("Не найдено улиц, сервер отключен.");
