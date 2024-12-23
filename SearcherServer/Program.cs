@@ -3,6 +3,8 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 
+using TcpLib;
+
 namespace SearcherServer
 {
     internal class Program

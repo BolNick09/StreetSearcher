@@ -3,6 +3,8 @@ using System.Net;
 using System.Text;
 using System.Xml.Linq;
 
+using TcpLib;
+
 namespace FrmSearcherServer
 {
     public partial class FrmSearcherClient : Form
