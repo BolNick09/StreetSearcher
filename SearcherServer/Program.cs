@@ -19,8 +19,11 @@ namespace SearcherServer
 
         private async Task Run()
         {
-            streetIndices = new List<StreetIndex>();
+            
+            //string solutionDirectory = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName;
+            //string filePath = Path.Combine(solutionDirectory, "streets.txt");
             string filePath = "C:\\Users\\BolNi\\source\\repos\\StreetSearcher\\streets.txt";
+            streetIndices = new List<StreetIndex>();
             streetIndices = ParseFromFile(filePath);
             if (streetIndices.Count == 0)
             {
